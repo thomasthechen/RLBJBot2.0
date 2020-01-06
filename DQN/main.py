@@ -4,17 +4,22 @@ from dqn2 import Agent
 import numpy as np
 from gym import wrappers
 import matplotlib.pyplot as plt
+from environment import *
+import torch as T
 
 if __name__ == '__main__':
-    env = gym.make('Blackjack-v0')
-    brain = Agent(gamma=0.99, epsilon = 1.0, alpha = 0.0003, batch_size = 64, n_actions = 2, input_dims = [3])
+    #env = #gym.make('Blackjack-v0')
+    env = BlackjackEnv()
+    brain = Agent(gamma=0.99, epsilon = 1.0, alpha = 0.0003, batch_size = 64, n_actions = 3, input_dims = [4])
 
     scores = []
     avgscore = []
     eps_history = []
-    n_games = 2000
+    n_games = 1500
     score = 0
     avg_score = -1
+
+    
     for i in range(n_games):
         
         if i % 20 == 0 and i > 0:
@@ -28,12 +33,13 @@ if __name__ == '__main__':
         
         score = 0
         eps_history.append(brain.EPSILON)
-        observation = env.reset()
+        observation, dropout = env.reset()
         done = False
+        
 
         while not done:
-            action = brain.chooseAction(observation)
-            observation_, reward, done, info = env.step(action)
+            action = brain.chooseAction(observation, dropout)
+            observation_, reward, done, info, dropout = env.step(action)
             score += reward
             brain.storeTransition(observation, action, reward, observation_,
             done)
@@ -47,7 +53,11 @@ if __name__ == '__main__':
     filename = 'lunar-lander.png'
     #plotLearning(x, scores, eps_history, filename)
 
-    
+    for j in range(1,12):
+        for i in range(2,22): 
+            print(brain.Q_eval(T.tensor([j, i, 0, 1]).float())[T.argmax(brain.Q_eval(T.tensor([j, i, 0, 1]).float())).item()], end =" ")
+        print("")
+
     plt.plot(scores)
     plt.plot(avgscore)
     plt.ylabel('Scores')

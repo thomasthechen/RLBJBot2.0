@@ -36,6 +36,7 @@ class Agent(object):
         self.EPS_DEC = eps_dec
         self.ALPHA = alpha
         self.action_space = [i for i in range(n_actions)]
+        #print (self.action_space)
         self.n_actions = n_actions
         self.mem_size = max_mem_size
         self.batch_size = batch_size
@@ -60,13 +61,16 @@ class Agent(object):
         self.terminal_memory[index] = 1 - terminal
         self.mem_cntr += 1
 
-    def chooseAction(self, observation):
+    def chooseAction(self, observation, dropout):
         rand = np.random.random()
-        actions = self.Q_eval.forward(observation)
+        actions = self.Q_eval.forward(observation) * dropout
+        
         if rand > self.EPSILON:
             action = T.argmax(actions).item()
         else:
-            action = np.random.choice(self.action_space)
+            X = np.ma.masked_equal(T.FloatTensor(self.action_space) * dropout,0)
+            action = int( np.random.choice(X))
+            
         return action
 
     def learn(self):
